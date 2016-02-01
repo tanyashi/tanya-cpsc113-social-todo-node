@@ -1,0 +1,28 @@
+{
+  "name": "cpsc113-socialtodo-node",
+  "version": "1.0.0",
+  "description": "my first assignment for class",
+  "main": "index.js",
+  "dependencies": {
+    "express": "^4.13.4",
+    "body-parser": "^1.14.2",
+    "express-handlebars": "^3.0.0",
+    "express-session": "^1.13.0"
+  },
+  "devDependencies": {
+    "nodemon": "^1.8.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tanyashi/tanya-cpsc113-social-todo-node.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tanyashi/tanya-cpsc113-social-todo-node/issues"
+  },
+  "homepage": "https://github.com/tanyashi/tanya-cpsc113-social-todo-node#readme"
+}
