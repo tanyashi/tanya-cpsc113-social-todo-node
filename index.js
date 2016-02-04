@@ -10,7 +10,6 @@ var Users = require('./models/users.js');
 var Tasks = require('./models/tasks.js');
 
 
-
 // Configure our app
 var store = new MongoDBStore({
   uri: process.env.MONGO_URL,
@@ -54,25 +53,35 @@ function isLoggedIn(req, res, next){
   }
 }
 
-// Middleware that loads a users tasks if they are logged in.
+
+// Middleware that loads a user's own tasks if they are logged in.
 function loadUserTasks(req, res, next) {
   if(!res.locals.currentUser){
     return next();
   }
   Tasks.find({}).or([
-      {owner: res.locals.currentUser},
-      {collaborators: res.locals.currentUser.email}])
-    .exec(function(err, tasks){
-      if(!err){
-        res.locals.tasks = tasks;
-      }
-      next();
+    {owner: res.locals.currentUser},
+    {collaborators: res.locals.currentUser.email}])
+  .exec(function(err, tasks){
+    if(!err){
+      res.locals.tasks = tasks;
+    }
+    next();
   });
 }
 
 // Return the home page after loading tasks for users, or not.
 app.get('/', loadUserTasks, function (req, res) {
-      res.render('index');
+  res.render('index', {
+    helpers: {
+      ifCond: function (v1, v2, options) { 
+        if(v1.equals(v2)) {
+          return options.fn(this);
+        }
+        return options.inverse(this);
+      }
+    }
+  });
 });
 
 // Handle submitted form for new users
@@ -107,8 +116,6 @@ app.post('/user/register', function (req, res) {
   });
 });
 
-
-
 app.post('/user/login', function (req, res) {
   // Try to find this user by email
   Users.findOne({email: req.body.email}, function(err, user){
@@ -132,8 +139,9 @@ app.post('/user/login', function (req, res) {
 
 // Log a user out
 app.get('/user/logout', function(req, res){
-  req.session.destroy();
-  res.redirect('/');
+  req.session.destroy(function(){
+    res.redirect('/');
+  });
 });
 
 //  All the controllers and routes below this require
@@ -148,13 +156,52 @@ app.post('/task/create', function(req, res){
   newTask.description = req.body.description;
   newTask.collaborators = [req.body.collaborator1, req.body.collaborator2, req.body.collaborator3];
   newTask.save(function(err, savedTask){
-    if(err || !savedTask){
+    if(err || !savedTask) {
       res.send('Error saving task!');
-    }else{
+    } else {
       res.redirect('/');
     }
   });
 });
+
+// Task completion
+app.post('/task/complete', function(req, res){
+  Tasks.findById(req.body._id,function(err,result){
+    if (err) {
+      res.send('Error finding task!');
+    }
+    var taskdb = result;
+    Tasks.findByIdAndUpdate(req.body._id, 
+      {isComplete: !taskdb.isComplete})
+      .exec(function(err, tasks) {
+        if (err || !tasks) {
+          res.send('Error updating task!');
+        } else {
+          res.redirect('/');
+        }
+      });
+  });
+});
+
+// Task deletion
+app.post('/task/delete', function (req, res) {
+  Tasks.findById(req.body._id)
+    .exec(function(err, tasks) {
+      if (err || !tasks) {
+        res.send('Error!');
+      } else {
+        tasks.remove(function(err) {
+          if (err) {
+            res.statusCode = 403;
+            res.send(err);
+          } else {
+            res.redirect('/');
+          }
+        });
+      }
+    });
+});
+
 
 // Start the server
 app.listen(process.env.PORT, function () {

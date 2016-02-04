@@ -6,14 +6,14 @@ var Schema = mongoose.Schema,
 var stringField = {
     type: String,
     minlength: 1,
-    maxlength: 500
+    maxlength: 5000
 }
 
 var TaskSchema = new Schema({
     owner: ObjectId,
     title: stringField,
     description: stringField,
-    isComplete: Boolean,
+    isComplete: {type: Boolean, default: false},
     collaborators: [String]
 });
 
